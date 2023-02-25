@@ -63,7 +63,6 @@ void* server_func(void* input){
 	uint64_t socket_client_flags0 = 0;
 
 	uint64_t local_return_values0[(THREADS_PER_RESPONSE)+1] = {0};
-	uint64_t local_return_values1[(THREADS_PER_RESPONSE)+1] = {0};
 
 	struct request* current_chip;
 
@@ -74,14 +73,6 @@ void* server_func(void* input){
 
 			*(uint64_t*)(&local_return_values0[THREADS_PER_RESPONSE]) = socket_client_flags0;
 			memcpy((void*)this_server->server_response->server_responses[0], (void*)local_return_values0, sizeof(local_return_values0));
-		}
-		old_client_flags0 = socket_client_flags0;
-
-		EVAL(REPEAT(NCLIENTS, CHIP_IMP15_2, SERVER_CODE, current_chip,  0, 1))
-		if (old_client_flags0 ^ socket_client_flags0) {
-
-			*(uint64_t*)(&local_return_values1[THREADS_PER_RESPONSE]) = socket_client_flags0;
-			memcpy((void*)this_server->server_response->server_responses[1], (void*)local_return_values1, sizeof(local_return_values0));
 		}
 		old_client_flags0 = socket_client_flags0;
 	}
