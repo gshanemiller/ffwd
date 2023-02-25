@@ -16,9 +16,6 @@ volatile int num_of_server_launched;
 struct server_set *server_response_set[MAX_NUM_OF_SERVERS];
 struct server_args *server_arg[MAX_NUM_OF_SERVERS];
 struct request *chip0[MAX_NUM_OF_SERVERS];
-struct request *chip1[MAX_NUM_OF_SERVERS];
-struct request *chip2[MAX_NUM_OF_SERVERS];
-struct request *chip3[MAX_NUM_OF_SERVERS];
 
 int active_threads_per_socket = 0;
 int global_id = 0;
@@ -29,9 +26,6 @@ char* platform;
 int **cores;
 
 volatile int finished[32] __attribute__((aligned(128))) = {0};
-volatile int finished2[32] __attribute__((aligned(128))) = {0};
-volatile int finished3[32] __attribute__((aligned(128))) = {0};
-volatile int finished4[32] __attribute__((aligned(128))) = {0};
 pthread_t server_thread[MAX_NUM_OF_SERVERS];
 
 void move_to_core(int core_id){
@@ -64,23 +58,11 @@ void* server_func(void* input){
 	move_to_core(this_server->server_core);
 
 	uint64_t old_client_flags0 = 0;
-	uint64_t old_client_flags1 = 0;
-	uint64_t old_client_flags2 = 0;
-	uint64_t old_client_flags3 = 0;
 
 	uint64_t socket_client_flags0 = 0;
-	uint64_t socket_client_flags1 = 0;
-	uint64_t socket_client_flags2 = 0;
-	uint64_t socket_client_flags3 = 0;
 
 	uint64_t local_return_values0[(THREADS_PER_RESPONSE)+1] = {0};
 	uint64_t local_return_values1[(THREADS_PER_RESPONSE)+1] = {0};
-	uint64_t local_return_values4[(THREADS_PER_RESPONSE)+1] = {0};
-	uint64_t local_return_values5[(THREADS_PER_RESPONSE)+1] = {0};
-	uint64_t local_return_values8[(THREADS_PER_RESPONSE)+1] = {0};
-	uint64_t local_return_values9[(THREADS_PER_RESPONSE)+1] = {0};
-	uint64_t local_return_values12[(THREADS_PER_RESPONSE)+1] = {0};
-	uint64_t local_return_values13[(THREADS_PER_RESPONSE)+1] = {0};
 
 	struct request* current_chip;
 
@@ -101,57 +83,6 @@ void* server_func(void* input){
 			memcpy((void*)this_server->server_response->server_responses[1], (void*)local_return_values1, sizeof(local_return_values0));
 		}
 		old_client_flags0 = socket_client_flags0;
-
-		current_chip = this_server->chip1;
-		EVAL(REPEAT(NCLIENTS, CHIP_IMP15_1, SERVER_CODE, current_chip,  1, 4))
-		if (old_client_flags1 ^ socket_client_flags1) {
-
-			*(uint64_t*)(&local_return_values4[THREADS_PER_RESPONSE]) = socket_client_flags1;
-			memcpy((void*)this_server->server_response->server_responses[4], (void*)local_return_values4, sizeof(local_return_values0));
-		}
-		old_client_flags1 = socket_client_flags1;
-
-		EVAL(REPEAT(NCLIENTS, CHIP_IMP15_2, SERVER_CODE, current_chip,  1, 5))
-		if (old_client_flags1 ^ socket_client_flags1) {
-
-			*(uint64_t*)(&local_return_values5[THREADS_PER_RESPONSE]) = socket_client_flags1;
-			memcpy((void*)this_server->server_response->server_responses[5], (void*)local_return_values5, sizeof(local_return_values0));
-		}
-		old_client_flags1 = socket_client_flags1;
-
-		current_chip = this_server->chip2;	
-		EVAL(REPEAT(NCLIENTS, CHIP_IMP15_1, SERVER_CODE, current_chip,  2, 8))
-		if (old_client_flags2 ^ socket_client_flags2) {
-
-			*(uint64_t*)(&local_return_values8[THREADS_PER_RESPONSE]) = socket_client_flags2;
-			memcpy((void*)this_server->server_response->server_responses[8], (void*)local_return_values8, sizeof(local_return_values0));
-		}
-		old_client_flags2 = socket_client_flags2;
-
-		EVAL(REPEAT(NCLIENTS, CHIP_IMP15_2, SERVER_CODE, current_chip,  2, 9))
-		if (old_client_flags2 ^ socket_client_flags2) {
-
-			*(uint64_t*)(&local_return_values9[THREADS_PER_RESPONSE]) = socket_client_flags2;
-			memcpy((void*)this_server->server_response->server_responses[9], (void*)local_return_values9, sizeof(local_return_values0));
-		}
-		old_client_flags2 = socket_client_flags2;
-
-		current_chip = this_server->chip3;
-		EVAL(REPEAT(NCLIENTS, CHIP_IMP15_1, SERVER_CODE, current_chip,  3, 12))
-		if (old_client_flags3 ^ socket_client_flags3) {
-
-			*(uint64_t*)(&local_return_values12[THREADS_PER_RESPONSE]) = socket_client_flags3;
-			memcpy((void*)this_server->server_response->server_responses[12], (void*)local_return_values12, sizeof(local_return_values0));
-		}
-		old_client_flags3 = socket_client_flags3;
-
-		EVAL(REPEAT(NCLIENTS, CHIP_IMP15_2, SERVER_CODE, current_chip,  3, 13))
-		if (old_client_flags3 ^ socket_client_flags3) {
-
-			*(uint64_t*)(&local_return_values13[THREADS_PER_RESPONSE]) = socket_client_flags3;
-			memcpy((void*)this_server->server_response->server_responses[13], (void*)local_return_values13, sizeof(local_return_values0));
-		}
-		old_client_flags3 = socket_client_flags3;
 	}
 
 	return 0;
@@ -180,7 +111,7 @@ void ffwd_thread_create(pthread_t *thread, pthread_attr_t *client_attr, void *(*
 	int id_in_chip = 0;
 	int my_chip = 0;
 	int i;
-	struct request* myrequest[MAX_NUM_OF_SERVERS];
+	struct request* myrequest[MAX_NUM_OF_SERVERS] = {0};
 
 	// skip the first core in each chip (for server purpose)
 	if (global_id == (cores_per_socket-1) || global_id == (cores_per_socket*2)-1 || global_id == (cores_per_socket*3)-1 || global_id == (cores_per_socket*4)-1 || global_id == (cores_per_socket*5)-1 || global_id == (cores_per_socket*6)-1 || global_id == (cores_per_socket*7)-1 ){
@@ -209,21 +140,6 @@ void ffwd_thread_create(pthread_t *thread, pthread_attr_t *client_attr, void *(*
 				myrequest[i] = &(chip0[i][id_in_chip]);
 			}
 		break;
-		case 1:
-			for (i=0; i < num_of_server_launched; i++){
-				myrequest[i] = &(chip1[i][id_in_chip]);
-			}
-		break;
-		case 2: 
-			for (i=0; i < num_of_server_launched; i++){
-				myrequest[i] = &(chip2[i][id_in_chip]);
-			}
-		break;
-		case 3:
-			for (i=0; i < num_of_server_launched; i++){
-				myrequest[i] = &(chip3[i][id_in_chip]);
-			}
-		break;
 	}
 
 	context->initfunc = func;
@@ -246,7 +162,7 @@ void ffwd_bind_main_thread(){
 	int id_in_chip = 0;
 	int my_chip = 0;
 	int i;
-	struct request* myrequest[MAX_NUM_OF_SERVERS];
+	struct request* myrequest[MAX_NUM_OF_SERVERS] = {0};
 
 	// skip the first core in each chip (for server purpose)
 	if (global_id == (cores_per_socket-1) || global_id == (cores_per_socket*2)-1 || global_id == (cores_per_socket*3)-1 || global_id == (cores_per_socket*4)-1 || global_id == (cores_per_socket*5)-1 || global_id == (cores_per_socket*6)-1 || global_id == (cores_per_socket*7)-1 ){
@@ -275,21 +191,6 @@ void ffwd_bind_main_thread(){
 				myrequest[i] = &(chip0[i][id_in_chip]);
 			}
 		break;
-		case 1:
-			for (i=0; i < num_of_server_launched; i++){
-				myrequest[i] = &(chip1[i][id_in_chip]);
-			}
-		break;
-		case 2: 
-			for (i=0; i < num_of_server_launched; i++){
-				myrequest[i] = &(chip2[i][id_in_chip]);
-			}
-		break;
-		case 3:
-			for (i=0; i < num_of_server_launched; i++){
-				myrequest[i] = &(chip3[i][id_in_chip]);
-			}
-		break;
 	}
 
 	context->id_in_chip = id_in_chip;
@@ -312,9 +213,6 @@ void ffwd_bind_main_thread(){
 
 void ffwd_shutdown() {
 	finished[0]=1;
-	finished2[0]=1;
-	finished3[0]=1;
-	finished4[0]=1;
 	int i;
 	for (i=0; i < num_of_server_launched; i++){
 		pthread_join(server_thread[i], 0);
@@ -322,9 +220,6 @@ void ffwd_shutdown() {
 
 	for (i=0; i < num_of_server_launched; i++){
 		numa_free(chip0[num_of_server_launched], 4096);
-		numa_free(chip1[num_of_server_launched], 4096);
-		numa_free(chip2[num_of_server_launched], 4096);
-		numa_free(chip3[num_of_server_launched], 4096);
 		numa_free(server_response_set[num_of_server_launched], sizeof(struct server_set));
 		numa_free(server_arg[num_of_server_launched], sizeof(struct server_args));
 	}
@@ -364,7 +259,10 @@ static void initialize_core_ordering(){
     }
 
     cores_per_socket = all_threads / total_sockets;
-    num_sockets = total_sockets/ 2;
+  //  num_sockets = total_sockets/ 2;
+  // This test code only runs 1 socket. not sure why orig runs 'num_sockets = total_sockets/ 2'.
+  // anyway force setting num_sockets to 1 which will avoid int division by 0 for active_threads_per_socket
+  num_sockets = 1;
 	active_threads_per_socket = all_threads / num_sockets;
 
 	cores = (int**) malloc(sizeof(int*) * total_sockets);
@@ -385,8 +283,7 @@ static void initialize_core_ordering(){
 	num_threads = all_threads;
 	active_threads_per_socket -= (active_threads_per_socket/cores_per_socket);
 
-	// printf("Running on %s with %d sockets and %d threads\n", platform, num_sockets, num_threads);
-
+	printf("Running on %s with %d sockets, %d threads, activeThrPerSocket %d\n", platform, num_sockets, num_threads, active_threads_per_socket);
 }
 
 void ffwd_init() {
@@ -421,14 +318,8 @@ void launch_servers(int num_of_servers){
 		}
 
 		chip0[s] = (struct request*)numa_alloc_onnode(4096, 0);
-		chip1[s] = (struct request*)numa_alloc_onnode(4096, 1);
-		chip2[s] = (struct request*)numa_alloc_onnode(4096, 2);
-		chip3[s] = (struct request*)numa_alloc_onnode(4096, 3);
 
-		if (mprotect((void*)chip0[s], 4096, PROT_EXEC | PROT_READ | PROT_WRITE) || 
-			mprotect((void*)chip1[s], 4096, PROT_EXEC | PROT_READ | PROT_WRITE) || 
-			mprotect((void*)chip2[s], 4096, PROT_EXEC | PROT_READ | PROT_WRITE) || 
-			mprotect((void*)chip3[s], 4096, PROT_EXEC | PROT_READ | PROT_WRITE)){
+		if (mprotect((void*)chip0[s], 4096, PROT_EXEC | PROT_READ | PROT_WRITE)) {
 			perror("mprotect\n");
 			exit(1);
 		}
@@ -437,9 +328,6 @@ void launch_servers(int num_of_servers){
 		server_arg[s] = (struct server_args*) numa_alloc_onnode(sizeof(struct server_args), server_numa_node);
 		server_arg[s]->server_core = server_core;
 		server_arg[s]->chip0 = chip0[s];
-		server_arg[s]->chip1 = chip1[s];
-		server_arg[s]->chip2 = chip2[s];
-		server_arg[s]->chip3 = chip3[s];
 		server_arg[s]->server_response = server_response_set[s];
 
 		//launch the server

@@ -23,9 +23,9 @@ typedef struct data
 
 struct timespec t_start, t_end;
 
-int num_of_servers;
-int num_of_threads;
-int duration;
+int num_of_servers = 1;
+int num_of_threads = 1;
+int duration = 10;
 static volatile int stop;
 volatile char dummy[128] __attribute__((aligned(128)));
 volatile int variable[1024*32] __attribute__((aligned(128))) = {0};
@@ -100,12 +100,12 @@ int main (int argc, char ** argv){
 	}
 
 	struct timespec timeout;
-	timeout.tv_sec = duration / 1000;
-	timeout.tv_nsec = (duration % 1000) * 1000000;
+	timeout.tv_sec = duration;
+	timeout.tv_nsec = 0;
 	stop = 0;
 	
 	ffwd_init();
-	launch_servers(4);
+	launch_servers(num_of_servers);
 
 	pthread_t t[MAX_THREADS];
 
@@ -135,14 +135,13 @@ int main (int argc, char ** argv){
     uint64_t duration = finish - start;
     double duration_sec = (double)(duration) / 1000000000LL;
 
-   	printf("%d %.3f %.3f\n", num_of_threads, duration_sec, (nr_ops)/((double)(duration_sec*1000000LL)));
-
 	ffwd_shutdown();
 
 	for (i = 0; i < num_of_threads; i++) {
 		free(th_data[i]);
 	}
 
+  printf("numOfThreads %d durationSecs %lf ops-completed %lu\n", num_of_threads, duration_sec, nr_ops);
 
 	return 0;
 }
