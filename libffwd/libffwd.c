@@ -56,6 +56,7 @@ void* server_func(void* input){
 	struct server_args* this_server = (struct server_args*) input;
 
 	move_to_core(this_server->server_core);
+  printf("pinned server thread to core %d\n", this_server->server_core);
 
 	uint64_t old_client_flags0 = 0;
 
@@ -99,6 +100,7 @@ pthread_t * create_thread(void *(* func) (void *)){
 void* ffwd_client_start(void* param) {
 	struct ffwd_context *context = param;
 	move_to_core(context->id);
+  printf("pinned client thread to core %d\n", context->id);
 
 	pthread_setspecific(thr_context_key, context);
 	void* retval = context->initfunc(context->initvalue);
