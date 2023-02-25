@@ -1,6 +1,6 @@
 SHELL = /bin/bash
 
-CFLAGS = -O2 -g
+CFLAGS = -O1 -g
 LIBS = -lnuma -lpthread -lrt
 MCMODEL = -mcmodel=large
 ARCH = $(shell ./platform.sh)

@@ -106,11 +106,13 @@ int main (int argc, char ** argv){
 	
 	ffwd_init();
 	launch_servers(num_of_servers);
+  printf("launched %d servers\n", i);
 
 	pthread_t t[MAX_THREADS];
 
     for (i = 0; i < num_of_threads; i++){
 		ffwd_thread_create(&t[i], 0, client, (void *)(th_data[i]) );
+    printf("launched client %d\n", i);
 	}
 
 	clock_gettime(CLOCK_MONOTONIC, &t_start);
